@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 import shutil
 import os
 import uuid
@@ -142,4 +142,5 @@ async def upload_and_process_video(background_tasks: BackgroundTasks, file: Uplo
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Face Tracking Emoji API", "docs_url": "/docs"}
+    with open(os.path.join(BASE_DIR, "index.html"), "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())

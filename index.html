@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Tracking Emoji AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #9d4edd;
+            --secondary: #ff9e00;
+            --bg-color: #0f1016;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8f9fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Abstract Background Blobs */
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 10s ease-in-out infinite;
+        }
+
+        .blob-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: -100px;
+            left: -100px;
+            border-radius: 50%;
+        }
+
+        .blob-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            bottom: -50px;
+            right: -50px;
+            border-radius: 50%;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        /* Container */
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #e0aaff, #c77dff, #ff9e00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: #adb5bd;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        /* Drag & Drop Zone */
+        .dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 50px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            margin-bottom: 20px;
+        }
+
+        .dropzone.dragover {
+            border-color: var(--secondary);
+            background: rgba(255, 158, 0, 0.1);
+        }
+
+        .dropzone-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .dropzone-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f8f9fa;
+        }
+
+        .dropzone-subtext {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 8px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Button */
+        button {
+            background: linear-gradient(135deg, var(--primary), #c77dff);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(157, 78, 221, 0.3);
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 25px rgba(157, 78, 221, 0.5);
+        }
+
+        button:disabled {
+            background: #495057;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Status & Video Player */
+        #status-area {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loader {
+            display: none;
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--secondary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-text {
+            color: #ff9e00;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: none;
+            animation: pulse-op 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-op {
+            from { opacity: 0.6; }
+            to { opacity: 1; }
+        }
+
+        video {
+            width: 100%;
+            border-radius: 12px;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-top: 15px;
+            background: #000;
+        }
+        
+        .download-btn {
+            display: none;
+            background: var(--secondary);
+            margin-top: 15px;
+            box-shadow: 0 10px 20px rgba(255, 158, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="container">
+        <h1>Face Tracking Emoji</h1>
+        <p class="subtitle">Upload a short video and watch the AI seamlessly map emojis to faces.</p>
+
+        <form id="upload-form">
+            <div class="dropzone" id="dropzone">
+                <span class="dropzone-icon">📹</span>
+                <div class="dropzone-text">Drag & Drop Video Here</div>
+                <div class="dropzone-subtext">or click to browse (.mp4, .mov, .avi)</div>
+                <input type="file" id="file-input" accept="video/mp4,video/x-m4v,video/*" required>
+            </div>
+            
+            <button type="submit" id="submit-btn" disabled>Generate AI Video</button>
+        </form>
+
+        <div id="status-area">
+            <div class="loader" id="loader"></div>
+            <div class="status-text" id="status-text">Processing your video... This might take a moment.</div>
+            
+            <video id="result-video" controls autoplay loop playsinline></video>
+            <button id="download-btn" class="download-btn">Save Video</button>
+        </div>
+    </div>
+
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('file-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const uploadForm = document.getElementById('upload-form');
+        const loader = document.getElementById('loader');
+        const statusText = document.getElementById('status-text');
+        const resultVideo = document.getElementById('result-video');
+        const downloadBtn = document.getElementById('download-btn');
+        
+        let selectedFile = null;
+
+        // Form Event Listeners
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if(e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            if (fileInput.files.length > 0) {
+                selectedFile = fileInput.files[0];
+                dropzone.querySelector('.dropzone-text').textContent = selectedFile.name;
+                dropzone.querySelector('.dropzone-text').style.color = '#c77dff';
+                submitBtn.disabled = false;
+                
+                // Reset states
+                resultVideo.style.display = 'none';
+                downloadBtn.style.display = 'none';
+                if(resultVideo.src) {
+                    URL.revokeObjectURL(resultVideo.src);
+                    resultVideo.src = '';
+                }
+            }
+        }
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedFile) return;
+
+            // UI Changes for loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Uploading...';
+            loader.style.display = 'block';
+            statusText.style.display = 'block';
+            resultVideo.style.display = 'none';
+            downloadBtn.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/api/v1/process-video/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Generation failed');
+
+                const blob = await response.blob();
+                const videoUrl = URL.createObjectURL(blob);
+
+                // UI Changes for success
+                loader.style.display = 'none';
+                statusText.style.display = 'none';
+                submitBtn.textContent = 'Generate Another';
+                submitBtn.disabled = false;
+                fileInput.value = ''; // clear input
+
+                // Display video
+                resultVideo.src = videoUrl;
+                resultVideo.style.display = 'block';
+                
+                // Configure download button
+                downloadBtn.style.display = 'block';
+                downloadBtn.onclick = () => {
+                    const a = document.createElement('a');
+                    a.href = videoUrl;
+                    a.download = 'emoji_tracker_result.mp4';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                };
+
+            } catch (error) {
+                loader.style.display = 'none';
+                statusText.style.display = 'block';
+                statusText.textContent = '❌ An error occurred during processing.';
+                statusText.style.color = '#ff4d4d';
+                submitBtn.textContent = 'Try Again';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
